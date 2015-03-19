@@ -67,6 +67,7 @@
 // 29 seconds determined from measuring many home NAT devices
 #define KEEPALIVE_INTERVAL 29000
 
+#define CONNID_RESERVED 0xFFFF
 
 #define SEQ_NR_MASK 0xFFFF
 #define ACK_NR_MASK 0xFFFF
@@ -2476,7 +2477,7 @@ void utp_initialize_socket(	utp_socket *conn,
 		do {
 			conn_seed = utp_call_get_random(conn->ctx, conn);
 			// we identify v1 and higher by setting the first two bytes to 0x0001
-			conn_seed &= 0xffff;
+			conn_seed %= 0xffff;
 		} while (conn->ctx->utp_sockets->Lookup(UTPSocketKey(psaddr, conn_seed)));
 
 		conn_id_recv += conn_seed;
@@ -2844,7 +2845,7 @@ int utp_process_udp(utp_context *ctx, const byte *buffer, size_t len, const stru
 
 	// We have not found a matching utp_socket, and this isn't a SYN.  Reject it.
 	const uint32 seq_nr = pf1->seq_nr;
-	if (flags != ST_SYN) {
+	if (flags != ST_SYN || id == CONNID_RESERVED) {
 		ctx->current_ms = utp_call_get_milliseconds(ctx, NULL);
 
 		for (size_t i = 0; i < ctx->rst_info.GetCount(); i++) {
