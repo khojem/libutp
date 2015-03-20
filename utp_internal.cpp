@@ -2801,13 +2801,13 @@ int utp_process_udp(utp_context *ctx, const byte *buffer, size_t len, const stru
 			ctx->log(UTP_LOG_DEBUG, NULL, "recv RST for existing connection");
 			#endif
 
+			const int err = (conn->state == CS_SYN_SENT) ? UTP_ECONNREFUSED : UTP_ECONNRESET;
 			if (conn->state == CS_FIN_SENT)
 				conn->state = CS_DESTROY;
 			else
 				conn->state = CS_RESET;
 
 			utp_call_on_overhead_statistics(conn->ctx, conn, false, len + conn->get_udp_overhead(), close_overhead);
-			const int err = (conn->state == CS_SYN_SENT) ? UTP_ECONNREFUSED : UTP_ECONNRESET;
 			utp_call_on_error(conn->ctx, conn, err);
 		}
 		else {
